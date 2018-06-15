@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>  
+    <p>dog</p>  
+    <p>cat</p>  
+    <p>pig</p>  
+      
+
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script>  
+        var dataset = ["so cute","cute","fat"];  
+        // var dataset = ["so cute","cute","fat", "other"];  
+        // var dataset = ["so cute"];  
+        var p = d3.select("body")  
+            .selectAll("p");  
+              
+        p.data(dataset)
+            .text(function(d,i){  
+                return "第"+i+"个动物"+d;  
+            });  
+    </script>  
+  </body>
+</html>

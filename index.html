@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <link rel="stylesheet" href="static/css/iconfont.css">
+  <link rel="stylesheet" href="static/css/reset.css">
+  <link rel="stylesheet" href="static/css/index.css">
+</head>
+<body>
+  <div id="container">
+    <!-- 顶部菜单 -->
+    <div class="header">
+      <div class="column pop-btn" data-content="保存" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-save"></i></div>
+      <div class="divider"></div>
+      <div class="column pop-btn" data-content="剪切" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-cut"></i></div>
+      <div class="column pop-btn" data-content="复制" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-copy"></i></div>
+      <div class="column pop-btn" id="test-loadXML" data-content="粘贴" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-paste"></i></div>
+      <div class="column pop-btn" id="delete-graph" data-content="清空" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-trasha"></i></div>
+      <div class="column pop-btn" id="delete-ele" data-content="删除" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-remove"></i></div>
+      <div class="divider"></div>
+      <div class="column pop-btn" data-content="撤销" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-repeat"></i></div>
+      <div class="column pop-btn" data-content="恢复" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-undo"></i></div>
+      <div class="divider"></div>
+      <div class="column pop-btn" id="zoom-enlarge" data-content="放大" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-zoom"></i></div>
+      <div class="column pop-btn" id="zoom-narrow" data-content="缩小" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-zoomout"></i></div>
+      <div class="column pop-btn" id="reset-zoom" data-content="归位" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-maximize"></i></div>
+      <div class="divider"></div>
+      <div class="column pop-btn" data-content="导入json" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-sign-in"></i></div>
+      <div class="column pop-btn small popup" data-content="导出json" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-signout"></i></div>
+      <div class="divider"></div>
+      <div class="column pop-btn" id="helper" data-content="将左侧活动拖至编辑区" data-position="bottom center" data-variation="mini"><i class="icon iconfont icon-help"></i></div>
+    </div>
+
+    <div class="main">
+      <!-- 左侧控件 -->
+      <div class="box" id="flowComponents">
+        <div class="components-btn noComponent clearfix" name="selectBtn">
+          <i class="tools select-icon"></i><span>选择</span>
+        </div>
+        <div class="components-btn noComponent" name="addStartEndBtn" draggable="false">
+          <i class="tools addStartEnd-icon"></i><span>自动插入</span>
+        </div>
+        <div class="components-btn" name="startComponent" type="start" draggable="true" data-show="S">
+          <i class="tools start-icon"></i><span>开始</span>
+        </div>
+        <div class="components-btn clearfix" name="endComponent" type="end" draggable="true" data-show="E">
+          <i class="tools end-icon"></i><span>结束</span>
+        </div>
+        <div class="components-btn clearfix" name="ordinaryActivity" type="activity" draggable="true" data-show="普通活动">
+          <i class="tools ordinary-icon"></i><span>普通活动</span>
+        </div>
+        <div class="components-btn clearfix" name="blockActivity" type="activity" draggable="true" data-show="块活动">
+          <i class="tools block-icon"></i><span>块活动</span>
+        </div>
+        <div class="components-btn clearfix" name="subFlowActivity" type="activity" draggable="true" data-show="子活动">
+          <i class="tools subFlow-icon"></i><span>子活动</span>
+        </div>
+        <div class="components-btn clearfix" name="routeActivity" type="activity" draggable="true" data-show="路径活动">
+          <i class="tools route-icon"></i><span>路径活动</span>
+        </div>
+        <div class="components-btn noComponent clearfix" name="NOROUTING">
+          <i class="tools line-icon"></i><span>转移</span>
+        </div>
+        <div class="components-btn noComponent clearfix" name="SIMPLEROUTING">
+          <i class="tools polyline-icon"></i><span>自转移</span>
+        </div>
+        <div class="components-btn noComponent clearfix" name="000ROUTING">
+          <i class="tools loop-icon"></i><span>循环</span>
+        </div>
+      </div>
+      
+      <!-- 工作区等 -->
+      <div class="content">
+        <div class="paint">
+          <!-- <svg></svg> -->
+        </div>
+
+        <div class="text"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="static/js/d3.v3.js"></script>
+  <script src="static/js/jquery.js"></script>
+  <script>
+    var initialDate = {
+      nodes: [],
+      edges: []
+      // participants: []
+    }
+
+    // 获取paint
+    var container = d3.select('.paint').node(),
+        containerId = 'tab_main'
+
+    // 创建svg标签
+    var svg = d3.select('.paint').append('svg')
+                        .attr('width', '100%')
+                        .attr('height', container.clientHeight)
+
+    var GraphCreator = function (containerId, svg, nodes, edges, participants) {
+      let self = this
+
+      self.nodes = nodes || []
+      self.edges = edges || []
+      self.participants = participants || []
+      self.containerId = containerId
+
+      self.state = {
+        activeEdit: true,
+        selectedNode: null,
+        selectedEdge: null,
+        mouseDownNode: null,
+        mouseDownLink: null,
+        justDragged: false,
+        justScaleTransGraph: false,
+        lastKeyDown: -1,
+        shiftNodeDrag: false,
+        selectedText: null,
+        drawLine: ''
+      }
+
+      var defs = svg.append('defs')
+      defs.append('svg:marker')
+        .attr('id', self.containerId + '-end-arrow')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refx', 42)
+        .attr('markerWidth', 5)
+        .attr('markerHeight', 5)
+        .attr('orient', 'auto')
+        .append('svg:path')
+        .attr('d', 'M0,-5L10,0L0,5')
+
+      defs.append('marker')
+        .attr('id', self.containerId + '-mark-end-arrow')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refx', 7)
+        .attr('markerWidth', 5)
+        .attr('markerHeight', 5)
+        .attr('orient', 'auto')
+        .append('svg:path')
+        .attr('d', 'M0,-5L10,0L0,5')
+
+      self.svg = svg
+
+      self.show_position = svg.append("text")
+        .attr({
+          'x': 1107,
+          'y': 15,
+          'fill': '#E1784B'
+        })
+
+      self.svgG = svg.append("g")
+                      .classed(self.consts.graphClass, true)
+      var svgG = self.svgG
+
+      // 点击元素的时候会改变d的值为点击的x y， 画线的时候会去掉hidden，画好后添加hidden
+      self.dragLine = svgG.append('path')
+        .attr('class', 'link dragline hidden')
+        .attr('d', 'M0,0L0,0')
+        .style('marker-end', 'url(#' + self.containerId + '-mark-end-arrow)')
+
+      self.paths = svgG.append("g").selectAll("g")
+      self.circles = svgG.append("g").selectAll("g")
+
+      self.drag = d3.behavior.drag()
+        .origin(function(d) {
+          // d = selected circle. The drag origin is the origin of the circle
+          return {
+            x: d.x,
+            y: d.y
+          };
+        })
+        .on("dragstart", function() {
+          d3.select(this)
+            .select("circle")
+            .attr("r", self.consts.nodeRadius + self.consts.nodeRadiusVary);
+        })
+        .on("drag", function(args) {
+          console.log('drag--args', args)
+          self.state.justDragged = true;
+          self.dragmove.call(self, args);
+        })
+        .on("dragend", function(args) {
+          console.log(' self.consts', self.consts)
+          // args = circle that was dragged
+          d3.select(this).select("circle").attr("r", self.consts.nodeRadius - self.consts.nodeRadiusVary);
+        });
+
+      // listen for key events
+      d3.select(window).on("keydown", function() {
+          self.svgKeyDown.call(self);
+        })
+        .on("keyup", function() {
+          self.svgKeyUp.call(self);
+        });
+      svg.on("mousedown", function(d) {
+        self.svgMouseDown.call(self, d);
+      });
+      svg.on("mouseup", function(d) {
+        self.svgMouseUp.call(self, d);
+      });
+      svg.on("mousemove", function(d) {
+        self.show_position.text('pos: '+d3.mouse(svgG.node())[0].toFixed(0)+', '+d3.mouse(svgG.node())[1].toFixed(0));
+      });
+
+      $('#flowComponents .components-btn[type]').not('.noComponent').attr('draggable', 'true')
+          .on('dragstart', function(ev) {
+            // $('.full-left').css({cursor: 'no-drop'});
+            $(this).siblings().removeClass('active').end().addClass('active');
+            // 设置放置时候区域的颜色
+            $('.full-right>.tab.active .full-right-top').addClass('activate');
+            /* 设置拖动过程显示图片
+            var icon = document.createElement('img');
+            icon.src = $(this).find('img').attr('src');
+            ev.originalEvent.dataTransfer.setDragImage(icon,10,10);*/
+            var json_obj = {
+              text: $(this).attr('data-show'),
+              component: $(this).attr('name'),
+              type: $(this).attr('type')
+            };
+            console.log(2222, ev)
+            ev.originalEvent.dataTransfer.setData('tr_data', JSON.stringify(json_obj));
+          })
+          .on('dragend', function(ev) {
+            $('.full-right>.tab.active .full-right-top').removeClass('activate');
+      }); 
+
+    $('.content').on('drop', '.paint', function(ev) {
+      console.log(3333333, self)
+      ev.stopPropagation(); 
+      ev.preventDefault(); 
+      var position = {
+        x: parseFloat(ev.originalEvent.offsetX),
+        y: parseFloat(ev.originalEvent.offsetY)
+      };
+
+      position = self.parsePosition(this, position);
+
+      var data = JSON.parse(ev.originalEvent.dataTransfer.getData('tr_data'));
+      data = $.extend(data, position);
+      var node = self.createNode(data);
+
+      self.nodes.push(node);
+      self.updateGraph();
+
+    })
+    .on('dragover', function(ev) { 
+      ev.preventDefault();
+    });
+    }
+
+    GraphCreator.prototype.consts = {
+      selectedClass: "selected",
+      connectClass: "connect-node",
+      circleGClass: "conceptG",
+      graphClass: "graph",
+      activeEditId: "active-editing",
+      BACKSPACE_KEY: 8,
+      DELETE_KEY: 46,
+      ENTER_KEY: 13,
+      nodeRadius: 34,
+      nodeRadiusVary: 1
+    };
+
+    GraphCreator.prototype.updateGraph = function() {
+      var self = this,
+          consts = self.consts,
+          state = self.state,
+          nodes = self.nodes, 
+          edges = self.edges;
+      
+      self.paths = self.paths.data(edges, function(d) {
+        return String(d.source.id) + "+" + String(d.target.id);
+      });
+
+      var paths = self.paths;
+      // update existing paths
+      var link = paths.style('marker-end', 'url(#'+self.containerId+'-end-arrow)')
+        .classed(consts.selectedClass, function(d) {
+          return d === state.selectedEdge;
+        })
+        .attr("conditype", function(d) {
+          if (d.postCondition) {
+            return changeCase(d.postCondition.conditype, 5);
+          } else {
+            return '';
+          }
+        })
+        .attr("d", function(d) {
+          if (d.drawLine == 'NOROUTING') {
+            return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y;
+          }
+          if (d.drawLine == 'SIMPLEROUTING') {
+            var start = {
+              x: d.source.x,
+              y: d.source.y
+            };
+            var des = {
+              x: d.target.x,
+              y: d.target.y
+            };
+            return self.getLink_d(start, des);
+          }
+        });
+      refresh(link); // 兼容IE11
+
+      // add new paths
+      paths.enter()
+        .append("path")
+        .style('marker-end', 'url(#'+self.containerId+'-end-arrow)')
+        .classed("link", true)
+        .attr("conditype", function(d) {
+          if (d.postCondition) {
+            return changeCase(d.postCondition.conditype, 5);
+          } else {
+            return '';
+          }
+        })
+        .attr("d", function(d) {
+          if (d.drawLine == 'NOROUTING') {
+            return "M" + d.source.x + "," + d.source.y + "L" + d.target.x + "," + d.target.y;
+          }
+          if (d.drawLine == 'SIMPLEROUTING') {
+            var start = {
+              x: d.source.x,
+              y: d.source.y
+            };
+            var des = {
+              x: d.target.x,
+              y: d.target.y
+            };
+            return self.getLink_d(start, des);
+          }
+        })
+        .on("mousedown", function(d) {
+          self.pathMouseDown.call(self, d3.select(this), d);
+        })
+        .on("mouseup", function(d) {
+          state.mouseDownLink = null;
+        });
+
+      // remove old links
+      paths.exit().remove();
+
+      // update existing nodes
+      self.circles = self.circles.data(nodes, function(d) {
+        return d.id;
+      });
+
+      self.circles.attr("transform", function(d) {
+        if (d == state.selectedNode) { // 更新节点名称
+          var tspan = d3.select(this).select('tspan');
+          if (tspan.text() !== d.title) {
+            tspan.text(d.title);
+          }
+        }
+        return "translate(" + d.x + "," + d.y + ")";
+      });
+
+      // add new nodes
+      var newGs = self.circles.enter()
+                              .append("g")
+                              .attr({"id": function(d) { return generateUUID(); }});
+
+      newGs.classed(consts.circleGClass, true)
+            .attr("transform", function(d) {
+              return "translate(" + d.x + "," + d.y + ")";
+            })
+            .on("mouseover", function(d) {
+              if (state.shiftNodeDrag) {
+                d3.select(this).classed(consts.connectClass, true);
+              }
+            })
+            .on("mouseout", function(d) {
+              d3.select(this).classed(consts.connectClass, false);
+            })
+            .on("mousedown", function(d) {
+              self.circleMouseDown.call(self, d3.select(this), d);
+            })
+            .on("mouseup", function(d) {
+              self.circleMouseUp.call(self, d3.select(this), d);
+            })
+            .call(self.drag);
+
+      newGs.append("circle")
+            .attr("r", String(consts.nodeRadius));
+
+      newGs.each(function(d) {
+        switch (d.type) {
+          case 'start':
+            d3.select(this).classed('start', true);
+            break;
+          case 'end':
+            d3.select(this).classed('end', true);
+            break;
+        }
+        self.insertTitleLinebreaks(d3.select(this), d);
+      });
+
+      // remove old nodes
+      self.circles.exit().remove();
+    };
+
+    GraphCreator.prototype.dragmove = function(d) {
+      // console.log('d', d)
+      let self = this
+      var drawLine = self.state.drawLine
+      var link;
+      if (self.state.shiftNodeDrag || drawLine) {
+        var svgG = self.svgG,
+            dragLine = self.dragLine;
+        switch (drawLine) {
+          case 'NOROUTING': // 直线
+            link = dragLine.attr('d', 'M' + d.x + ',' + d.y + 'L' + d3.mouse(svgG.node())[0] + ',' + d3.mouse(svgG.node())[1]);
+            break;
+          case 'SIMPLEROUTING': // 折线
+            var des = {
+              x: d3.mouse(svgG.node())[0], 
+              y: d3.mouse(svgG.node())[1] 
+            };
+            var link_d = self.getLink_d(d, des);
+            link = dragLine.attr('d', link_d);
+            break;
+        }
+        refresh(link); // 兼容IE11
+      } else {
+        d.x += d3.event.dx;
+        d.y += d3.event.dy;
+        self.updateGraph();
+      }
+    };
+
+    GraphCreator.prototype.svgMouseDown = function() {
+      this.state.graphMouseDown = true;
+    };
+
+    GraphCreator.prototype.svgMouseUp = function() {
+      var self = this,
+        state = self.state;
+      if (state.justScaleTransGraph) {
+        // dragged not clicked
+        state.justScaleTransGraph = false;
+      } else if (state.graphMouseDown && d3.event.shiftKey) {
+        // clicked not dragged from svg
+        var xycoords = d3.mouse(self.svgG.node()),
+          d = {
+            id: seqer_nodeID.gensym(),
+            title: '普通活动',
+            component: 'ordinaryActivity',
+            type: 'activity',
+            x: xycoords[0],
+            y: xycoords[1],
+            conventional: {
+              MustActivity: true, 
+              taskAssign: 'taskAutoMode', 
+              autoAcceptAllAssignments: true, 
+              isResponsible: true,
+              startMode: 'manual',
+              finishMode: 'manual'
+            },
+            frontCondition: {},
+            postCondition: {},
+            extendAttr: [],
+            highLevel: {},
+            timeoutLimit: {},
+            monitorinf: {isResponsibleTem: true},
+            eventTypeId: null
+          };
+        self.nodes.push(d);
+        self.updateGraph();
+      } else if (state.shiftNodeDrag || state.drawLine) {
+        // dragged from node
+        state.shiftNodeDrag = false;
+        self.dragLine.classed("hidden", true);//win7 IE11下存在bug
+      }
+      state.graphMouseDown = false;
+    };
+
+    GraphCreator.prototype.svgKeyDown = function() {
+      var self = this,
+        state = self.state,
+        consts = self.consts;
+      // make sure repeated key presses don't register for each keydown
+      if (state.lastKeyDown !== -1) return;
+
+      state.lastKeyDown = d3.event.keyCode;
+      var selectedNode = state.selectedNode,
+        selectedEdge = state.selectedEdge;
+      /*
+      switch (d3.event.keyCode) {
+        //case consts.BACKSPACE_KEY:
+        case consts.DELETE_KEY:
+          d3.event.preventDefault();
+          if (selectedNode) {
+            self.nodes.splice(self.nodes.indexOf(selectedNode), 1);
+            self.spliceLinksForNode(selectedNode);
+            state.selectedNode = null;
+            self.updateGraph();
+            // self.
+          } else if (selectedEdge) {
+            self.edges.splice(self.edges.indexOf(selectedEdge), 1);
+            state.selectedEdge = null;
+            self.updateGraph();
+          }
+          break;
+      }*/
+    };
+
+    GraphCreator.prototype.svgKeyUp = function() {
+      this.state.lastKeyDown = -1;
+    };
+
+    /**
+     * 根据缩放比例和偏移量转换坐标
+     * @param  {DOM}    svgContainer .svgContainer元素
+     * @param  {Object} position     位置坐标
+     * @return {Object} position     转换后的坐标
+     */
+    GraphCreator.prototype.parsePosition = function(svgContainer, position) {
+      var transform = $(svgContainer).find('.graph').attr('transform'); // transform="translate(20,11) scale(1)"
+        if (transform) {
+          var result = []; // ['20,11', '1']
+          var regExp_ = /\(([^)]*)\)/g;
+          var ele;
+          while ((ele=regExp_.exec(transform)) != null) {
+             result.push(ele[1]);
+          }
+          var translate = result[0] && result[0].split(/,|\s/) || [0, 0]; // IE11 result[0] 为 '23.45 22.87'
+          var scale = result[1] && result[1].split(',')[0] || 1;
+          if (translate.length == 1 && translate[0] == 0) { // 兼容IE11
+            translate.push(0);
+          }
+          position.x = (position.x - translate[0])/scale;
+          position.y = (position.y - translate[1])/scale;
+        }
+        return position;
+    };
+
+    GraphCreator.prototype.createNode = function(data) {
+      var node;
+      switch (data.type) {
+        case 'activity':
+          node = {
+            id: seqer_nodeID.gensym(),
+            title: data.text,
+            component: data.component,
+            type: data.type,
+            x: data.x,
+            y: data.y,
+            conventional: {
+              MustActivity: true, 
+              taskAssign: 'taskAutoMode', 
+              autoAcceptAllAssignments: true, 
+              isResponsible: true,
+              startMode: 'manual',
+              finishMode: 'manual'
+            },
+            frontCondition: {},
+            postCondition: {},
+            extendAttr: [],
+            highLevel: {},
+            timeoutLimit: {},
+            monitorinf: {isResponsibleTem: true},
+            eventTypeId: null
+          };
+          if (data.component == 'blockActivity') {
+            node.activitySet = {
+              activitySetId: seqer_blockId.gensym(),
+              graphCreator: null
+            };
+          }
+          break;
+        default: // 开始、结束节点
+          node = {
+            id: generateUUID(),
+            title: data.text,
+            component: data.component,
+            type: data.type,
+            x: data.x,
+            y: data.y
+          };
+          break;
+      }
+      return node;
+    };
+
+    /* 插入文字 */
+    GraphCreator.prototype.insertTitleLinebreaks = function(gEl, d) {
+      var words = d.title.split(/\s+/g),
+        nwords = words.length;
+      var el = gEl.append("text")
+        .attr("text-anchor", "middle")
+        .attr("letter-spacing", "1");
+      switch (d.type) {
+        case 'start':
+        case 'end':
+          el.attr("dy", "13");
+          break;
+        default:
+          el.attr("dy", "-" + (nwords - 1) * 7.5);
+          break;
+      }
+      for (var i = 0; i < words.length; i++) {
+        var tspan = el.append('tspan').text(words[i]);
+        if (i > 0)
+          tspan.attr('x', 0).attr('dy', '15');
+      }
+    };
+
+    /**
+     * svg
+     * refresh 连线兼容IE11
+     * @param  {[type]} link [改变attr后的dragLine]
+     * 
+     */
+    function refresh(link) {
+      if (/(MSIE 10)|(Trident)/.test(navigator.appVersion)) {
+        if (link[0] instanceof Array) {
+          link[0].forEach( function(item) {
+            item.parentNode.insertBefore(item, item);
+          });
+        } else if (link[0]) {
+          var svgNode = link.node();
+          svgNode.parentNode.insertBefore(svgNode, svgNode);
+        }
+      }
+    }
+
+    /**
+     * 大小写字母转化
+     * @param  {[type]} str  需要转化的字符串 
+     * @param  {[type]} type 1: 首字母大写 2：首页母小写 3：大小写转换 4：全部大写 5：全部小写
+     * @return {[type]}      转化后的字符串
+     * changeCase('asdasd', 1) --> Asdasd
+     */
+    function changeCase(str, type) {
+      if (!str) return '';
+        function ToggleCase(str) {
+            var itemText = "";
+            str.split("").forEach(
+                function (item) {
+                    if (/^([a-z]+)/.test(item)) {
+                        itemText += item.toUpperCase();
+                    }
+                    else if (/^([A-Z]+)/.test(item)) {
+                        itemText += item.toLowerCase();
+                    }
+                    else{
+                        itemText += item;
+                    }
+                });
+            return itemText;
+        }
+        switch (type) {
+            case 1:
+                return str.replace(/^(\w)(\w+)/, function (v, v1, v2) {
+                    return v1.toUpperCase() + v2;
+                });
+            case 2:
+                return str.replace(/^(\w)(\w+)/, function (v, v1, v2) {
+                    return v1.toLowerCase() + v2;
+                });
+            case 3:
+                return ToggleCase(str);
+            case 4:
+                return str.toUpperCase();
+            case 5:
+                return str.toLowerCase();
+            default:
+                return str;
+        }
+    }
+
+    /**
+     * [generateUUID 返回一串序列码]
+     * @return {String} [uuid]
+     */
+    function generateUUID() {
+        var d = new Date().getTime();
+        var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = (d + Math.random() * 16) % 16 | 0;
+            d = Math.floor(d/16);
+            return (c=='x' ? r : (r&0x3|0x8)).toString(16);
+        });
+        return uuid;
+    }
+
+    /**
+     * 生成不重复的序列号
+     */
+    var serial_marker = function() {
+      var prefix = '';
+      var seq = 1;
+      return {
+          set_prefix: function(p) {
+              prefix = String(p);
+          },
+          set_seq: function(s) {
+              seq = s;
+          },
+          gensym: function() {
+              var result = prefix + seq;
+              seq += 1;
+              return result;
+          }
+      };
+    };
+
+    var seqer_nodeID = serial_marker();
+    var seqer_blockId = serial_marker();
+
+    /**
+     * 存放所有 GraphCreator 对象及方法 
+     */
+    var graphPool = {
+      pools: [],
+      updateGraphActiveById: function(containerId) {
+        this.pools.forEach(function(graph) {
+          if (graph.containerId === containerId) {
+            // 确保当前点击的是true
+              graph.state.activeEdit = true;
+          } else {
+              graph.state.activeEdit = false;
+          }
+        });
+      },
+      getGraphByActiveEdit: function() {
+          var graph_active = this.pools.find(function(graph) {
+            return graph.state.activeEdit;
+          });
+          return graph_active;
+      },
+      removeGraphFromPools: function(containerId) {
+        var pools = this.pools;
+        for (var i = 0; i < pools.length; i++) {
+          if (pools[i].containerId === containerId) {
+            pools.splice(i, 1);
+          }
+        }
+
+      }
+    };
+
+    window.graph_main = new GraphCreator(containerId, svg, initialDate.nodes, initialDate.edges, initialDate.participants)
+    graphPool.pools.push(graph_main);
+    graph_main.updateGraph();
+
+  </script>
+</body>
+</html>

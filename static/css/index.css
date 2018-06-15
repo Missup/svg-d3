@@ -1,0 +1,213 @@
+@charset 'utf-8';
+* {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+}
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow-y: hidden;
+}
+body{
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  background-color: rgb(248, 248, 248)
+}
+/*超出省略号*/
+.text-ellipsis{
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+/* 清除浮动 */
+.clearfix:after {
+  content: "."; 
+  display: block; 
+  height: 0; 
+  clear: both; 
+  visibility: hidden;
+}
+
+/* begin */
+#container {
+  background-color: #fff;
+  width: 100%;
+  height: 100%;
+}
+.main {
+  height: 94%;
+}
+.box {
+  float: left;
+  width: 200px;
+  height: 100%;
+  border-right: 1px solid #ccc;
+}
+.content {
+  margin-left: 200px;
+  height: 100%;
+}
+.paint {
+  height: 70%;
+  border-bottom: 1px solid #ccc;
+  background-image: url('../img/bg.gif');
+}
+.text {
+  height: 30%;
+}
+
+/* header */
+.header {
+  min-height: 34px;
+  height: 6%;
+  border-bottom: 1px solid #58a5f3;
+  padding-top: 10px;
+  padding-left: 6px;
+  color: #3B5998;
+}
+.header .column {
+  display: inline-block;
+  height: 19px;
+  width: 26px;
+  font-size: 20px;
+  margin: 0 4px;
+  cursor: pointer;
+}
+.header .divider {
+  display: inline-block;
+  height: 14px;
+  border-right: 1px solid #c7cacd;
+}
+
+/* 工作栏icon */
+.components-btn {
+  margin-top: 10px;
+  line-height: 30px;
+  min-width: 100px;
+  min-height: 30px;
+  padding-left: 30px;
+}
+
+.components-btn:hover { 
+  background: #e6e7f5; 
+  border-radius: 3px;
+}
+
+.components-btn:not(.noComponent):hover span:after {
+  content: '\00BB'; 
+  color: #21BA45;
+  margin-left: 10px;
+}
+
+.components-btn.active { 
+  background: #e6e7f5;
+  border-radius: 3px;
+}
+
+.components-btn span { 
+  padding-left: 6px; 
+  cursor: pointer;
+}
+
+.box i.tools {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin: 5px 10px 0 8px;
+  overflow: hidden;
+  vertical-align: text-bottom;
+}
+
+.box .select-icon {
+  background: url('../img/wf_tools.png');
+  background-position: 0px 0px;
+}
+
+.box .addStartEnd-icon {
+  background: url('../img/wf_tools.png');
+  background-position: 42px 0px;
+}
+
+.box .start-icon {
+  background: url('../img/wf_tools.png');
+  background-position: 81px 0px;
+}
+
+.box .end-icon {
+  background: url('../img/wf_tools.png');
+  background-position: 61px 0px;
+}
+
+.box .ordinary-icon {
+  background: url('../img/wf_tools.png');
+  background-position: 0px 57px;
+}
+
+.box .block-icon {
+  background: url('../img/wf_tools.png');
+  background-position: 80px 57px;
+}
+
+.box .subFlow-icon {
+  background: url('../img/wf_tools.png');
+  background-position: 61px 57px;
+}
+
+.box .route-icon {
+  background: url('../img/wf_tools.png');
+  background-position: 41px 57px;
+}
+
+.box .line-icon {
+  background: url('../img/wf_tools.png');
+  background-position: 0 34px;
+}
+
+.box .polyline-icon {
+  background: url('../img/wf_tools.png');
+  background-position: 81px 34px;
+}
+
+.box .loop-icon {
+  background: url('../img/wf_tools.png');
+  background-position: 60px 34px;
+}
+
+
+.conceptG text{
+  pointer-events: none;
+}
+
+marker{
+  fill: #3c39f2;
+}
+
+g.conceptG circle{
+  fill: #F6FBFF;
+  stroke: #6164c1;
+  stroke-width: 1px;
+}
+
+g.conceptG:hover circle{
+  fill: rgb(200, 238, 241);
+}
+
+g.selected circle{
+  fill: #e8d0ef;
+  stroke: #9b78d3;
+  stroke-width: 1.5px;
+}
+g.selected:hover circle{
+  fill: #e8d0ef;
+}
+g.conceptG text{    
+  font-size: 12px;
+  fill: #151996;
+}
+
+
+/* end */

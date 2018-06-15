@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+</head>
+<body>
+	<svg width="960" height="600"></svg>
+
+	<script src="https://d3js.org/d3.v5.min.js"></script>
+	<script>
+	var marge = {top:60, bottom:60, left:60, right:60}
+	var dataset = [250, 210, 170, 130, 90]
+
+	var svg = d3.select('svg')
+	var g = svg.append('g')
+				.attr('transform', `translate(${marge.left}, ${marge.top})`)
+
+	var rectHeight = 30
+
+	// [20, 0] [20, 30] [20, 60]....
+
+	g.selectAll('rect')
+		.data(dataset)
+		.enter()
+		.append('rect')
+		.attr('x', 20)
+		.attr('y', (d, i) => {
+			return i * rectHeight
+		})
+		.attr('width', (d) => {
+			return d
+		})
+		.attr('height', rectHeight - 5)
+		.attr('fill', 'skyblue')
+
+	//为坐标轴定义一个线性比例尺
+	var xScale = d3.scaleLinear()
+	    .domain([0, d3.max(dataset)])
+	    .range([0, 250])
+	//定义一个坐标轴
+	var xAxis = d3.axisBottom(xScale)//定义一个axis，由bottom可知，是朝下的
+	    .ticks(5) //设置刻度数目
+	g.append("g")
+	    .attr("transform","translate("+20+","+(dataset.length * rectHeight)+")")
+	    .call(xAxis)
+
+
+
+
+    var dataset1 = [1.2, 2.3, 0.9, 1.5, 3.3];  
+    var min = d3.min(dataset1);//得到最小值  
+    var max = d3.max(dataset1);//得到最大值  
+    var scaleLinear = d3.scaleLinear()  
+        .domain([min,max])  
+        .range([0,300]);  
+    document.write("scaleLinear(1)输出："+scaleLinear(1));  
+    d3.select("body").append("br");//换行  
+    document.write("scaleLinear(2)输出："+scaleLinear(2));  
+    d3.select("body").append("br");  
+    document.write("scaleLinear(3.3)输出："+scaleLinear(3.3));  
+	</script>
+</body>
+</html>
